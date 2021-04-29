@@ -53,6 +53,7 @@ class App extends Component {
     if(this.state.dbank!=='undefined'){
       try {
         await this.state.dbank.methods.deposit().send({value: amount.toString(), from: this.state.account})
+        window.alert('Successfully deposited')
       } catch(e) {
         console.log('Error, deposit: ', e)
       }
@@ -63,6 +64,17 @@ class App extends Component {
 
   async withdraw(e) {
     //prevent button from default click
+    e.preventDefault()
+    if(this.state.dbank!=='undefined'){
+      try{
+        await this.state.dbank.methods.withdraw().send({from: this.state.account})
+        window.alert('Successfully withdrawn')
+      } catch (e) {
+        console.log('Error, withdraw ', e)
+      }
+    } else {
+      console.log('Nothing to withdraw from this account')
+    }
     //check if this.state.dbank is ok
     //in try block call dBank withdraw();
   }
@@ -120,19 +132,19 @@ class App extends Component {
                       /* pass amount to deposit function*/
                       this.deposit(amount)
                     }}>
-                      <div class = 'form-group mr-sm-2'>
+                      <div className = 'form-group mr-sm-2'>
                         <br></br>
                         <input
                           id='depositAmount'
                           step='0.01'
                           type='number'
-                          class='form-control form-control-md'
+                          className='form-control form-control-md'
                           placeholder='amount'
                           required
                           ref={(input) => {this.depositAmount = input}}
                         />
                       </div>
-                      <button type='submit' class='btn btn-primary'>DEPOSIT</button>
+                      <button type='submit' className='btn btn-primary'>DEPOSIT</button>
                     </form>
                   </div>
                 </Tab>
@@ -141,6 +153,9 @@ class App extends Component {
                     <br></br>
                     Do you want to withdraw with current accrued interest
                   </div>
+                  <button type='submit' className='btn btn-primary' 
+                  onClick={(e) => this.withdraw(e)}
+                  >Withdraw</button>
                 </Tab>
                 {/*add Tab withdraw*/}
               </Tabs>
