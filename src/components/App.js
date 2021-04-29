@@ -31,7 +31,7 @@ class App extends Component {
       try {
       // bank
         const dBankAddress = dBank.networks[netId].address
-        const bank = new web3.eth.Contract(dBank.abi, dBankAddress)
+        const dbank = new web3.eth.Contract(dBank.abi, dBankAddress)
         // token
         const token = new web3.eth.Contract(Token.abi, Token.networks[netId].address)
         this.setState({token, dbank, dBankAddress})
