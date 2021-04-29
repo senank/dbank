@@ -6,14 +6,15 @@ import "./Token.sol";
 contract dBank {
 
   //assign Token contract to variable
-
+  Token private token;
   //add mappings
 
   //add events
 
   //pass as constructor argument deployed Token contract
-  constructor() public {
-    //assign token deployed contract to variable
+  constructor(Token _token) public {
+    //assign token deployed contract to a variable
+    token = _token;
   }
 
   function deposit() payable public {
