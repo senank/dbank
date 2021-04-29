@@ -10,10 +10,19 @@ contract dBank {
   //add mappings
   mapping(address => uint) public etherBalanceOf;
   mapping(address => uint) public depositStart;
+  mapping(address => uint) public borrowStart;
+  mapping(address => uint) public collateralAmount;
+  
   mapping(address => bool) public isDeposited;
+  mapping(address => bool) public isBorrowed;
+  
+
   //add events
   event Deposit(address indexed user, uint etherAmount, uint timeStart);
   event Withdraw(address indexed user, uint etherAmount, uint timeEnd, uint interest);
+  event Borrow(address indexed user, uint collateral, uint borrowAmount, uint timeStart);
+  event Cleared(address indexed user, uint collateral, uint fee);
+  
 
   //pass as constructor argument deployed Token contract
   constructor(Token _token) public {
@@ -78,29 +87,51 @@ contract dBank {
 
   function borrow() payable public {
     //check if collateral is >= than 0.01 ETH
+    require(msg.value>=1e16, 'Not enough Collateral (min. 0.01 ETH)');
+    require(isBorrowed[msg.sender] == false, 'There is already borrowed funds');
+
     //check if user doesn't have active loan
 
     //add msg.value to ether collateral
+    collateralAmount[msg.sender] = collateralAmount[msg.sender] + msg.value;
 
     //calc tokens amount to mint, 50% of msg.value
+    uint tokens = msg.value / 2;
 
     //mint&send tokens to user
+    token.mint(msg.sender, tokens);
 
     //activate borrower's loan status
+    isBorrowed[msg.sender] = true;
+    borrowStart[msg.sender] = borrowStart[msg.sender] + block.timestamp;
 
     //emit event
+    emit Borrow(msg.sender, collateralAmount[msg.sender], tokens, block.timestamp);
   }
 
   function payOff() public {
     //check if loan is active
+    require(isBorrowed[msg.sender] = true, 'No outstanding loans');
+    require(token.transferFrom(msg.sender, address(this), collateralAmount[msg.sender]/2), 'Error, cannot receive tokens');
+
     //transfer tokens from user back to the contract
 
     //calc fee
-
+    uint base_fee = collateralAmount[msg.sender]/100; //1% fee
+    //  5% interest/year
+    uint value = (collateralAmount[msg.sender]/2)/1e16;
+    uint rate = 3166801783 * 5;
+    uint time = (block.timestamp - borrowStart[msg.sender]);
+    uint interest = time * value * rate;
+    uint totalFee = interest + base_fee;
     //send user's collateral minus fee
-
+    msg.sender.transfer(collateralAmount[msg.sender] - totalFee);
     //reset borrower's data
+    uint collateral = collateralAmount[msg.sender];
+    collateralAmount[msg.sender] = 0;
+    isBorrowed[msg.sender] = false;
 
     //emit event
+    emit Cleared(msg.sender, collateral, totalFee);
   }
 }

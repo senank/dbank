@@ -79,6 +79,30 @@ class App extends Component {
     //in try block call dBank withdraw();
   }
 
+  async borrow(amount) {
+    if(this.state.dbank!=='undefined'){
+      try{
+        await this.state.dbank.methods.borrow().send({value: amount.toString(), from: this.state.account})
+      } catch (e) {
+        console.log('Error, borrow: ', e)
+      }
+    }
+  }
+
+  async payOff(e) {
+    e.preventDefault()
+    if(this.state.dbank!=='undefined'){
+      try{
+        const collateralAmount = await this.state.dbank.methods.collateralAmount(this.state.account).call({from: this.state.account})
+        const tokenBorrowed = collateralAmount/2
+        await this.state.token.methods.approve(this.state.dBankAddress, tokenBorrowed.toString()).send({from: this.state.account})
+        await this.state.dbank.methods.payOff().send({from: this.state.account})
+      } catch(e) {
+        console.log('Error, pay off: ', e)
+      }
+    }
+  }
+
   constructor(props) {
     super(props)
     this.state = {
@@ -157,7 +181,50 @@ class App extends Component {
                   onClick={(e) => this.withdraw(e)}
                   >Withdraw</button>
                 </Tab>
-                {/*add Tab withdraw*/}
+                <Tab eventKey="borrow" title="Borrow">
+                  <div>
+
+                  <br></br>
+                    Do you want to borrow tokens?
+                    <br></br>
+                    (You'll get 50% of collateral, in Tokens)
+                    <br></br>
+                    Type collateral amount (in ETH)
+                    <br></br>
+                    <br></br>
+                    <form onSubmit={(e) => {
+
+                      e.preventDefault()
+                      let amount = this.borrowAmount.value
+                      amount = amount * 10 **18 //convert to wei
+                      this.borrow(amount)
+                    }}>
+                      <div className='form-group mr-sm-2'>
+                        <input
+                          id='borrowAmount'
+                          step="0.01"
+                          type='number'
+                          ref={(input) => { this.borrowAmount = input }}
+                          className="form-control form-control-md"
+                          placeholder='amount...'
+                          required />
+                      </div>
+                      <button type='submit' className='btn btn-primary'>BORROW</button>
+                    </form>
+                  </div>
+                </Tab>
+                <Tab eventKey="payOff" title="Payoff">
+                  <div>
+
+                  <br></br>
+                    Do you want to payoff the loan?
+                    <br></br>
+                    (You'll receive your collateral - fee)
+                    <br></br>
+                    <br></br>
+                    <button type='submit' className='btn btn-primary' onClick={(e) => this.payOff(e)}>PAYOFF</button>
+                  </div>
+                </Tab>
               </Tabs>
               </div>
             </main>
