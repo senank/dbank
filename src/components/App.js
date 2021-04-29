@@ -15,16 +15,34 @@ class App extends Component {
   }
 
   async loadBlockchainData(dispatch) {
-
-    //check if MetaMask exists
-
-      //assign to values to variables: web3, netId, accounts
-
-      //check if account is detected, then load balance&setStates, elsepush alert
-
-      //in try block load contracts
-
-    //if MetaMask not exists push alert
+    if(typeof window.ethereum !== 'undefined'){ // checking if metamask exists
+      const web3 = new Web3(window.ethereum) // assigning metamask 'cookie' to var
+      const netId = await web3.eth.net.getId() // assign networkID
+      const accts = await web3.eth.net.getAccounts() // assigning wallet addresses from account
+      
+      if(typeof accts !== 'underfined'){ //check if account is detected, then load balance&setStates, elsepush alert
+        const balance = await web3.eth.net.getBalance(accts[0])
+        this.setState({account: accts[0], balance: balance, web3: web3})
+      } else {
+        window.alert('Please login with metamask')
+      }
+    
+    //in try block load contracts
+      try {
+      // bank
+        const dBankAddress = dBank.networks[netId].address
+        const bank = new web3.eth.Contract(dBank.abi, dBankAddress)
+        // token
+        const token = new web3.eth.Contract(Token.abi, Token.networks[netId].address)
+        this.setState({token, dbank, dBankAddress})
+      } catch(e) {
+        console.log('Error', e)
+        window.alert('Contracts not deployed to the current network')
+      }
+    } else { //if MetaMask not exists push alert
+      window.alert('Please install metamask')
+    }
+    
   }
 
   async deposit(amount) {
